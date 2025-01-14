@@ -1,9 +1,15 @@
 'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+//import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 const categoryColors: Record<string, string> = {
   'Fonksiyonlar': 'bg-blue-500',
@@ -18,7 +24,7 @@ export default function ArticlePage() {
   
   const [article, setArticle] = useState<any>(null)
   const [relatedArticles, setRelatedArticles] = useState<any[]>([])
-  const supabase = createClientComponentClient()
+  //const supabase = createClientComponentClient()
 
   useEffect(() => {
     const loadArticle = async () => {

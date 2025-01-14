@@ -1,9 +1,15 @@
 'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+//import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 // Kategori renkleri tanımlaması
 const categoryColors: Record<string, string> = {
@@ -37,7 +43,8 @@ export default function Home() {
   const [articles, setArticles] = useState<any[]>([])
   const [allArticles, setAllArticles] = useState<any[]>([]) // Tüm makaleleri saklamak için
   const searchParams = useSearchParams()
-  const supabase = createClientComponentClient()
+  //const supabase = createClientComponentClient()
+  //const supabase = createClient()
 
   // Verileri yükleme
   useEffect(() => {
