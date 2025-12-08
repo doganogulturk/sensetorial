@@ -18,7 +18,7 @@ type ArticleWithCategory = {
   sira: number
   categories: {
     id: string
-    name: string
+    name: 'Fonksiyonlar' | 'Konular' | 'Nasıl Yapılır' | 'Görseller'
   }
 }
 
