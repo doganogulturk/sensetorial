@@ -1,141 +1,145 @@
-'use client'
-
-import React from 'react'
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-import type { Article, CategoryColorType } from '@/types'
+import { getCategoryStyle } from '@/lib/categories'
+import type { ArticleSummary, ArticleWithCategory } from '@/types'
+import ViewCounter from './ViewCounter'
 
-const categoryColors: CategoryColorType = {
-  'Fonksiyonlar': 'bg-blue-500',
-  'Konular': 'bg-emerald-500',
-  'Nasıl Yapılır': 'bg-amber-500',
-  'Görseller': 'bg-purple-500'
+type Props = {
+  article: ArticleWithCategory
+  related: ArticleSummary[]
+  previous: ArticleSummary | null
+  next: ArticleSummary | null
 }
 
-type ArticleWithCategory = Article & {
-  categories: {
-    name: keyof CategoryColorType
+// Veritabanındaki adres iframe'e konmadan önce doğrulanır (javascript: vb. engellenir)
+function safePdfUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.toString() : null
+  } catch {
+    return null
   }
 }
 
-interface ArticleViewProps {
-  article: ArticleWithCategory
-}
+const buttonClass =
+  'inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
 
-export default function ArticleView({ article }: ArticleViewProps) {
-  const [relatedArticles, setRelatedArticles] = useState<ArticleWithCategory[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadRelatedArticles() {
-      try {
-        const { data } = await supabase
-          .from('articles')
-          .select(`
-            id,
-            title,
-            categories (
-              name
-            )
-          `)
-          .eq('category_id', article.category_id)
-          .neq('id', article.id)
-          .order('title', { ascending: true })
-
-        setRelatedArticles(data as unknown as ArticleWithCategory[] || [])
-      } catch (error) {
-        console.error('Error loading related articles:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadRelatedArticles()
-  }, [article.id, article.category_id])
+export default function ArticleView({ article, related, previous, next }: Props) {
+  const style = getCategoryStyle(article.categories?.name)
+  const pdfUrl = safePdfUrl(article.pdf_url)
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb Navigation */}
-      <nav className="mb-6 text-sm">
-        <ol className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
+      <ViewCounter articleId={article.id} />
+
+      {/* Breadcrumb */}
+      <nav aria-label="Konum" className="mb-4 text-sm">
+        <ol className="flex min-w-0 items-center gap-2 text-gray-600 dark:text-gray-400">
           <li>
-            <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link href="/" className="transition-colors hover:text-blue-600 dark:hover:text-blue-400">
               Ana Sayfa
             </Link>
           </li>
-          <li>/</li>
-          <li>
-            <Link
-              href={`/?category=${article.category_id}`}
-              className={`px-2 py-1 rounded text-xs ${categoryColors[article.categories?.name]} bg-opacity-10 hover:bg-opacity-20 transition-colors cursor-pointer`}
-            >
-              {article.categories?.name}
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 dark:text-gray-100 font-medium truncate max-w-md">
+          {article.categories && (
+            <>
+              <li aria-hidden>/</li>
+              <li>
+                <Link
+                  href={`/?category=${article.category_id}#makaleler`}
+                  className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium transition-opacity hover:opacity-80 ${style.badge}`}
+                >
+                  {article.categories.name}
+                </Link>
+              </li>
+            </>
+          )}
+          <li aria-hidden>/</li>
+          <li className="truncate font-medium text-gray-900 dark:text-gray-100" aria-current="page">
             {article.title}
           </li>
         </ol>
       </nav>
 
-      {/* Ana içerik - PDF */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <h1 className="text-3xl font-bold dark:text-gray-100">{article.title}</h1>
-          <div
-            className={`w-2 h-2 rounded-full ${
-              categoryColors[article.categories?.name]
-            }`}
-          />
-        </div>
-
-        <iframe
-          src={`${article.pdf_url}#view=FitH`}
-          className="w-full h-screen rounded-lg border dark:border-gray-700 shadow-lg"
-          title={article.title}
-        />
-      </div>
-
-      {/* Alt kısım - İlgili makaleler */}
-      <div>
-        <h2 className="text-2xl font-semibold mb-6 dark:text-gray-100">
-          {article.categories?.name} Kategorisindeki Diğer Makaleler
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {relatedArticles.map(relatedArticle => (
-            <Link
-              key={relatedArticle.id}
-              href={`/article/${relatedArticle.id}`}
-              className="group p-4 border dark:border-gray-700 rounded-xl hover:shadow-xl transition-all duration-300 relative cursor-pointer bg-white dark:bg-gray-800 hover:scale-105 hover:border-blue-300 dark:hover:border-blue-600"
-            >
-              <div
-                className={`absolute left-0 top-0 w-1.5 h-full rounded-l-xl transition-all group-hover:w-2 ${
-                  categoryColors[relatedArticle.categories?.name]
-                }`}
-              />
-              <div className="pl-3">
-                <div className="flex items-start gap-2">
-                  <span className="text-xl">📄</span>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400 transition-colors leading-snug line-clamp-2">
-                      {relatedArticle.title}
-                    </h3>
-                  </div>
-                </div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <article className="min-w-0">
+          <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.accent}`} aria-hidden />
+              {article.title}
+            </h1>
+            {pdfUrl && (
+              <div className="flex shrink-0 gap-2">
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className={buttonClass}>
+                  ↗ Yeni sekmede aç
+                </a>
+                <a href={pdfUrl} download className={buttonClass}>
+                  ⬇ İndir
+                </a>
               </div>
-            </Link>
-          ))}
-        </div>
+            )}
+          </header>
 
-        {!isLoading && relatedArticles.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-            Bu kategoride başka makale bulunmuyor.
+          {pdfUrl ? (
+            <iframe
+              src={`${pdfUrl}#view=FitH`}
+              className="h-[80vh] min-h-[480px] w-full rounded-lg border border-gray-200 bg-gray-50 shadow-lg dark:border-gray-800 dark:bg-gray-900"
+              title={article.title}
+            />
+          ) : (
+            <p className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              Bu dokümanın dosyasına şu anda ulaşılamıyor.
+            </p>
+          )}
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 lg:hidden">
+            Doküman telefonda düzgün görünmüyorsa “Yeni sekmede aç” düğmesini kullanın.
           </p>
-        )}
+
+          {(previous || next) && (
+            <nav aria-label="Kategori içinde gezinme" className="mt-6 grid gap-3 sm:grid-cols-2">
+              {previous ? <PagerLink article={previous} direction="previous" /> : <span />}
+              {next && <PagerLink article={next} direction="next" />}
+            </nav>
+          )}
+        </article>
+
+        {/* Aynı kategorideki diğer makaleler */}
+        <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+          <h2 className="mb-3 text-lg font-semibold">
+            {article.categories ? `${article.categories.name} kategorisinde` : 'Diğer makaleler'}
+          </h2>
+          {related.length > 0 ? (
+            <ul className="space-y-1">
+              {related.map(item => (
+                <li key={item.id}>
+                  <Link
+                    href={`/article/${item.id}`}
+                    className="flex items-start gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-400"
+                  >
+                    <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${style.accent}`} aria-hidden />
+                    {item.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">Bu kategoride başka makale bulunmuyor.</p>
+          )}
+        </aside>
       </div>
     </div>
+  )
+}
+
+function PagerLink({ article, direction }: { article: ArticleSummary; direction: 'previous' | 'next' }) {
+  const isNext = direction === 'next'
+  return (
+    <Link
+      href={`/article/${article.id}`}
+      className={`group rounded-xl border border-gray-200 p-4 transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:border-gray-800 dark:hover:border-blue-500/60 dark:hover:bg-blue-500/5 ${isNext ? 'text-right sm:col-start-2' : ''}`}
+    >
+      <div className="text-xs text-gray-500 dark:text-gray-400">{isNext ? 'Sonraki →' : '← Önceki'}</div>
+      <div className="line-clamp-2 font-medium transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
+        {article.title}
+      </div>
+    </Link>
   )
 }

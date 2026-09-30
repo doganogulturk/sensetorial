@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sensetorial
 
-## Getting Started
+Qlik Sense eğitim dokümanlarının (PDF) kategorilere ayrılarak yayınlandığı site.
+Next.js (App Router) + Supabase + Tailwind CSS.
 
-First, run the development server:
+## Kurulum
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # değerleri doldurun
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Değişken | Açıklama |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase proje adresi |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (public) anahtarı |
+| `NEXT_PUBLIC_SITE_URL` | Sitenin yayındaki adresi; `sitemap.xml` için gerekli |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Veritabanı
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Yeni kurulumda `supabase-setup.sql` dosyasını Supabase SQL Editor'de çalıştırın.
+2. Ardından `supabase/migrations/` altındaki dosyaları sırayla çalıştırın
+   (mevcut veritabanında yalnızca bunlar yeterlidir). Bu migration:
+   - görüntülenme sayacı için `increment_article_views` fonksiyonunu ekler,
+   - ekleme/güncelleme/silme yetkisini `admins` tablosundaki kullanıcılarla sınırlar.
 
-## Learn More
+Makaleleri Supabase Dashboard (Table Editor) üzerinden eklemeye devam edebilirsiniz;
+Dashboard bu kısıtlamalardan etkilenmez. `sira` alanı ana sayfadaki "Önerilen sıra" ve
+makale sayfasındaki önceki/sonraki gezinme sırasını belirler.
 
-To learn more about Next.js, take a look at the following resources:
+## Komutlar
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Komut | Açıklama |
+|---|---|
+| `npm run dev` | Geliştirme sunucusu |
+| `npm run build` | Üretim derlemesi (tip kontrolü dahil) |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript kontrolü |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Yapı
 
-## Deploy on Vercel
+```
+src/
+  app/
+    page.tsx                  Ana sayfa (sunucuda render, 5 dk önbellek)
+    article/[id]/page.tsx     Makale sayfası + SEO metadata
+    sitemap.ts, robots.ts
+  components/
+    home/ArticleBrowser.tsx   Arama, kategori filtresi, sıralama (URL ile senkron)
+  lib/
+    categories.ts             Kategori renk/ikon/açıklamaları (tek kaynak)
+    supabase.ts               Veri erişim fonksiyonları
+    search.ts                 Türkçe karakter duyarsız arama
+supabase/migrations/          Veritabanı güncellemeleri
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Yeni bir kategori eklerseniz renk ve ikonunu `src/lib/categories.ts` içine ekleyin;
+eklemezseniz gri varsayılan stil kullanılır.

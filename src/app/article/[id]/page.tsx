@@ -1,61 +1,53 @@
-'use client'
-
-import React from 'react'
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { cache } from 'react'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import ArticleView from './components/ArticleView'
-import { getArticleById } from '@/lib/supabase'
-import Loading from '@/components/Loading'
+import { getArticleById, getArticlesByCategory } from '@/lib/supabase'
+import { siteName } from '@/lib/site'
 
-type ArticleWithCategory = {
-  id: string
-  title: string
-  pdf_url: string
-  created_at: string
-  views: number
-  category_id: string
-  sira: number
-  categories: {
-    id: string
-    name: 'Fonksiyonlar' | 'Konular' | 'Nasıl Yapılır' | 'Görseller'
+export const revalidate = 300
+
+// Makaleler ilk ziyarette oluşturulup önbelleğe alınır (build sırasında değil)
+export async function generateStaticParams() {
+  return []
+}
+
+type Props = { params: Promise<{ id: string }> }
+
+// generateMetadata ve sayfa aynı makaleyi tek sorguyla paylaşır
+const loadArticle = cache(getArticleById)
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const article = await loadArticle(id)
+  if (!article) return { title: 'Makale bulunamadı' }
+
+  const description = article.categories
+    ? `${article.title} — ${siteName} ${article.categories.name} kategorisindeki Qlik Sense eğitim dokümanı.`
+    : `${article.title} — ${siteName} Qlik Sense eğitim dokümanı.`
+
+  return {
+    title: article.title,
+    description,
+    alternates: { canonical: `/article/${article.id}` },
+    openGraph: { title: article.title, description, type: 'article' },
   }
 }
 
-export default function Page() {
-  const params = useParams()
-  const id = params.id as string
-  const [article, setArticle] = useState<ArticleWithCategory | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(false)
+export default async function Page({ params }: Props) {
+  const { id } = await params
+  const article = await loadArticle(id)
+  if (!article) notFound()
 
-  useEffect(() => {
-    async function loadArticle() {
-      try {
-        const data = await getArticleById(id)
-        if (!data) {
-          setError(true)
-        } else {
-          setArticle(data as ArticleWithCategory)
-        }
-      } catch (err) {
-        console.error('Error loading article:', err)
-        setError(true)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  const siblings = await getArticlesByCategory(article.category_id)
+  const index = siblings.findIndex(a => a.id === article.id)
 
-    loadArticle()
-  }, [id])
-
-  if (isLoading) {
-    return <Loading />
-  }
-
-  if (error || !article) {
-    notFound()
-  }
-
-  return <ArticleView article={article} />
+  return (
+    <ArticleView
+      article={article}
+      related={siblings.filter(a => a.id !== article.id)}
+      previous={index > 0 ? siblings[index - 1] : null}
+      next={index >= 0 && index < siblings.length - 1 ? siblings[index + 1] : null}
+    />
+  )
 }

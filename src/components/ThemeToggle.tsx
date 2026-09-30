@@ -1,47 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    // Sayfa yüklendiğinde localStorage'dan tema tercihini al
-    const savedTheme = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-
-    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark)
-    setIsDark(shouldBeDark)
-
-    if (shouldBeDark) {
-      document.documentElement.classList.add('dark')
-    }
-  }, [])
-
   const toggleTheme = () => {
-    const newTheme = !isDark
-    setIsDark(newTheme)
-
-    if (newTheme) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
+    const isDark = document.documentElement.classList.toggle('dark')
+    try {
+      localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    } catch {
+      // Gizli sekme vb. durumlarda tercih kaydedilemeyebilir
     }
   }
 
+  // İkon, <html> üzerindeki "dark" sınıfına göre CSS ile seçilir;
+  // böylece sunucu ve istemci çıktısı aynı kalır.
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-      aria-label="Toggle theme"
+      className="rounded-lg p-2 text-xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+      aria-label="Açık/koyu tema değiştir"
+      title="Açık/koyu tema"
     >
-      {isDark ? (
-        <span className="text-xl">☀️</span>
-      ) : (
-        <span className="text-xl">🌙</span>
-      )}
+      <span className="dark:hidden" aria-hidden>🌙</span>
+      <span className="hidden dark:inline" aria-hidden>☀️</span>
     </button>
   )
 }

@@ -1,35 +1,13 @@
-// Article tipi
-export interface Article {
-  id: string
-  title: string
-  pdf_url: string
-  created_at: string
-  views: number
-  category_id: string
-  sira: number
-}
+import type { Database } from './supabase'
 
-// Kategori tipi
-export interface Category {
-  id: string
-  name: string
-  created_at: string
-}
+export type Article = Database['public']['Tables']['articles']['Row']
+export type Category = Database['public']['Tables']['categories']['Row']
 
-// Birleştirilmiş article tipi
 export type ArticleWithCategory = Article & {
-  categories: {
-    id: string
-    name: keyof CategoryColorType
-  }
+  categories: Pick<Category, 'id' | 'name'> | null
 }
 
-// Kategori renkleri
-export const categoryColors = {
-  'Fonksiyonlar': 'bg-blue-500',
-  'Konular': 'bg-emerald-500',
-  'Nasıl Yapılır': 'bg-amber-500',
-  'Görseller': 'bg-purple-500'
-} as const
-
-export type CategoryColorType = typeof categoryColors
+/** Liste görünümleri için gereken hafif makale verisi */
+export type ArticleSummary = Pick<Article, 'id' | 'title' | 'category_id' | 'views' | 'sira' | 'created_at'> & {
+  categories: Pick<Category, 'id' | 'name'> | null
+}

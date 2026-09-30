@@ -1,99 +1,74 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
+import type { ArticleSummary, ArticleWithCategory, Category } from '@/types'
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+let client: SupabaseClient<Database> | null = null
+
+// İstemci ilk kullanımda oluşturulur; böylece env eksikse hata import anında değil,
+// veriye erişilmeye çalışıldığında ve anlaşılır bir mesajla alınır.
+export function getSupabase() {
+  if (client) return client
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url) throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+  if (!anonKey) throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
+
+  client = createClient<Database>(url, anonKey, {
+    auth: { persistSession: false },
+  })
+  return client
 }
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
-}
 
-export const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+const summaryColumns = 'id, title, category_id, views, sira, created_at, categories ( id, name )'
 
-// Helper fonksiyonlar
-export async function getArticles(categoryId?: string | null) {
-  let query = supabase
+export async function getArticleSummaries(): Promise<ArticleSummary[]> {
+  const { data, error } = await getSupabase()
     .from('articles')
-    .select(`
-      *,
-      categories (
-        id,
-        name
-      )
-    `)
+    .select(summaryColumns)
     .order('sira', { ascending: true })
-  
-  if (categoryId) {
-    query = query.eq('category_id', categoryId)
-  }
+    .order('title', { ascending: true })
 
-  const { data, error } = await query
   if (error) throw error
   return data
 }
 
-export async function getArticleById(id: string) {
-  const { data, error } = await supabase
+export async function getArticleById(id: string): Promise<ArticleWithCategory | null> {
+  const { data, error } = await getSupabase()
     .from('articles')
-    .select(`
-      *,
-      categories (
-        id,
-        name
-      )
-    `)
+    .select('*, categories ( id, name )')
     .eq('id', id)
-    .single()
-  
+    .maybeSingle()
+
+  // Geçersiz UUID formatı (22P02) "bulunamadı" olarak ele alınır
+  if (error?.code === '22P02') return null
   if (error) throw error
   return data
 }
 
-export async function getCategories() {
-  const { data, error } = await supabase
+export async function getArticlesByCategory(categoryId: string): Promise<ArticleSummary[]> {
+  const { data, error } = await getSupabase()
+    .from('articles')
+    .select(summaryColumns)
+    .eq('category_id', categoryId)
+    .order('sira', { ascending: true })
+    .order('title', { ascending: true })
+
+  if (error) throw error
+  return data
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const { data, error } = await getSupabase()
     .from('categories')
     .select('*')
     .order('name')
-  
+
   if (error) throw error
   return data
 }
 
-export async function getCategoryStats() {
-  const { data, error } = await supabase
-    .from('articles')
-    .select(`
-      category_id,
-      categories!inner(
-        id,
-        name
-      )
-    `)
-  
+export async function incrementArticleViews(articleId: string) {
+  const { error } = await getSupabase().rpc('increment_article_views', { article_id: articleId })
   if (error) throw error
-
-  type StatItem = {
-    category_id: string;
-    categories: {
-      id: string;
-      name: string;
-    };
-  }
-
-  const stats = (data as unknown as StatItem[]).reduce((acc: Record<string, { name: string, count: number }>, curr) => {
-    const categoryId = curr.category_id
-    if (!acc[categoryId]) {
-      acc[categoryId] = {
-        name: curr.categories.name,
-        count: 0
-      }
-    }
-    acc[categoryId].count++
-    return acc
-  }, {})
-
-  return stats
 }
