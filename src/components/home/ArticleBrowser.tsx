@@ -3,8 +3,8 @@
 import { Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ArrowUpDown, Eye, LayoutGrid, List, Search, Sparkles, TrendingUp, X } from 'lucide-react'
-import { ArticleRow, ArticleTile, NewBadge } from '@/components/ArticleItem'
+import { ArrowUpDown, Eye, LayoutGrid, List, Search, TrendingUp, X } from 'lucide-react'
+import { ArticleRow, ArticleTile } from '@/components/ArticleItem'
 import ContinueReading from '@/components/home/ContinueReading'
 import { getCategoryStyle } from '@/lib/categories'
 import { formatNumber } from '@/lib/format'
@@ -62,7 +62,7 @@ function BrowserView({ categories, articles, newSince, urlState }: Props & { url
   const pathname = usePathname()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [viewPref, setViewPref] = useLocalStorage('sensetorial:view')
-  const view = viewPref === 'grid' ? 'grid' : 'list'
+  const view = viewPref === 'list' ? 'list' : 'grid'
 
   const [query, setQuery] = useState(urlState.search)
   const [prevUrlSearch, setPrevUrlSearch] = useState(urlState.search)
@@ -138,10 +138,6 @@ function BrowserView({ categories, articles, newSince, urlState }: Props & { url
     }
   }, [articles, selectedCategory, deferredQuery, sort])
 
-  const newest = useMemo(
-    () => [...articles].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5),
-    [articles]
-  )
   const popular = useMemo(
     () => articles.filter(a => a.views > 0).sort((a, b) => b.views - a.views).slice(0, 5),
     [articles]
@@ -218,28 +214,12 @@ function BrowserView({ categories, articles, newSince, urlState }: Props & { url
       <div className="mt-12 space-y-12">
         {!hasFilters && <ContinueReading validIds={validIds} />}
 
-        {!hasFilters && newest.length > 0 && (
-          <div className={`grid gap-4 ${popular.length > 0 ? 'lg:grid-cols-2' : ''}`}>
-            <HighlightPanel title="Son eklenenler" icon={<Sparkles className="h-4 w-4" aria-hidden />}>
-              {newest.map(article => (
-                <HighlightLink key={article.id} article={article}>
-                  {isNew(article) && <NewBadge />}
-                </HighlightLink>
-              ))}
-            </HighlightPanel>
-            {popular.length > 0 && (
-              <HighlightPanel title="En çok okunanlar" icon={<TrendingUp className="h-4 w-4" aria-hidden />}>
-                {popular.map((article, i) => (
-                  <HighlightLink key={article.id} article={article} rank={i + 1}>
-                    <span className="flex shrink-0 items-center gap-1 text-xs tabular-nums text-fg-subtle">
-                      <Eye className="h-3.5 w-3.5" aria-hidden />
-                      {formatNumber(article.views)}
-                    </span>
-                  </HighlightLink>
-                ))}
-              </HighlightPanel>
-            )}
-          </div>
+        {!hasFilters && popular.length > 0 && (
+          <HighlightPanel title="En çok okunanlar" icon={<TrendingUp className="h-4 w-4" aria-hidden />}>
+            {popular.map((article, i) => (
+              <HighlightLink key={article.id} article={article} rank={i + 1} />
+            ))}
+          </HighlightPanel>
         )}
 
         {/* Tüm dokümanlar */}
@@ -302,7 +282,7 @@ function BrowserView({ categories, articles, newSince, urlState }: Props & { url
               ))}
             </ul>
           ) : (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4">
               {visibleArticles.map(article => (
                 <ArticleTile key={article.id} article={article} isNew={isNew(article)} />
               ))}
@@ -357,23 +337,22 @@ function HighlightPanel({ title, icon, children }: { title: string; icon: React.
         {icon}
         {title}
       </h2>
-      <ol>{children}</ol>
+      <ol className="lg:grid lg:grid-flow-col lg:grid-rows-3 lg:gap-x-4">{children}</ol>
     </section>
   )
 }
 
-function HighlightLink({ article, rank, children }: { article: ArticleSummary; rank?: number; children?: React.ReactNode }) {
-  const style = getCategoryStyle(article.categories?.name)
+function HighlightLink({ article, rank }: { article: ArticleSummary; rank: number }) {
   return (
     <li>
       <Link href={`/article/${article.id}`} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-subtle">
-        {rank ? (
-          <span className="w-4 shrink-0 text-center text-sm font-semibold tabular-nums text-fg-subtle">{rank}</span>
-        ) : (
-          <span className={`h-2 w-2 shrink-0 rounded-full ${style.dot}`} aria-hidden />
-        )}
+        <span className="w-4 shrink-0 text-center text-sm font-semibold tabular-nums text-fg-subtle">{rank}</span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{article.title}</span>
-        {children}
+        {article.categories && <span className="hidden text-xs text-fg-subtle sm:inline">{article.categories.name}</span>}
+        <span className="flex w-14 shrink-0 items-center justify-end gap-1 text-xs tabular-nums text-fg-subtle">
+          <Eye className="h-3.5 w-3.5" aria-hidden />
+          {formatNumber(article.views)}
+        </span>
       </Link>
     </li>
   )

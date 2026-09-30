@@ -58,7 +58,7 @@ export function ArticleRow({ article, isNew }: Props) {
   )
 }
 
-/** Kart görünümü */
+/** Kart görünümü: başlık üstte, kategori simgesi sağ altta silik arka plan olarak */
 export function ArticleTile({ article, isNew }: Props) {
   const style = getCategoryStyle(article.categories?.name)
   const Icon = style.icon
@@ -66,17 +66,24 @@ export function ArticleTile({ article, isNew }: Props) {
     <li>
       <Link
         href={`/article/${article.id}`}
-        className="group flex h-full flex-col rounded-xl border border-line bg-surface p-4 shadow-xs transition-all hover:border-line-strong hover:shadow-md"
+        className="group relative flex h-full min-h-32 flex-col overflow-hidden rounded-xl border border-line bg-surface p-3.5 shadow-xs sm:min-h-36 sm:p-4 transition-all hover:border-line-strong hover:shadow-md"
       >
-        <div className="mb-4 flex items-start justify-between gap-2">
-          <span className={`grid h-9 w-9 place-items-center rounded-lg ${style.soft}`}>
-            <Icon className="h-[18px] w-[18px]" aria-hidden />
-          </span>
+        <Icon
+          className={`pointer-events-none absolute -bottom-4 -right-4 h-20 w-20 sm:-bottom-5 sm:-right-5 sm:h-28 sm:w-28 opacity-[0.08] transition-all duration-300 group-hover:-rotate-6 group-hover:scale-105 group-hover:opacity-[0.14] dark:opacity-[0.12] dark:group-hover:opacity-[0.2] ${style.text}`}
+          strokeWidth={1.5}
+          aria-hidden
+        />
+        <div className="relative flex items-start justify-between gap-2">
+          <h3 className="line-clamp-3 text-sm font-medium leading-snug sm:text-base">{article.title}</h3>
           {isNew && <NewBadge />}
         </div>
-        <h3 className="mb-4 line-clamp-2 font-medium leading-snug">{article.title}</h3>
-        <div className="mt-auto flex items-center justify-between gap-2 text-xs text-fg-subtle">
-          <span>{article.categories?.name}</span>
+        <div className="relative mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-5 text-xs text-fg-subtle">
+          {article.categories && (
+            <span className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} aria-hidden />
+              {article.categories.name}
+            </span>
+          )}
           {article.views > 0 && (
             <span className="flex items-center gap-1 tabular-nums">
               <Eye className="h-3.5 w-3.5" aria-hidden />
