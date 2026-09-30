@@ -1,16 +1,24 @@
 import Link from 'next/link'
+import { CalendarDays, ChevronLeft, ChevronRight, Download, ExternalLink, Eye } from 'lucide-react'
 import { getCategoryStyle } from '@/lib/categories'
-import type { ArticleSummary, ArticleWithCategory } from '@/types'
-import ViewCounter from './ViewCounter'
+import { formatDate, formatNumber } from '@/lib/format'
+import type { ArticleSummary, ArticleWithCategory, Category } from '@/types'
+import DocsNav from './DocsNav'
+import MobileArticleBar from './MobileArticleBar'
+import PdfReaderLazy from './PdfReaderLazy'
+import ReadingTracker from './ReadingTracker'
+import ShareButton from './ShareButton'
 
 type Props = {
   article: ArticleWithCategory
-  related: ArticleSummary[]
+  categories: Category[]
+  allArticles: ArticleSummary[]
   previous: ArticleSummary | null
   next: ArticleSummary | null
+  position: { current: number; total: number } | null
 }
 
-// Veritabanındaki adres iframe'e konmadan önce doğrulanır (javascript: vb. engellenir)
+// Veritabanındaki adres gösterilmeden önce doğrulanır (javascript: vb. engellenir)
 function safePdfUrl(url: string) {
   try {
     const parsed = new URL(url)
@@ -20,111 +28,116 @@ function safePdfUrl(url: string) {
   }
 }
 
-const buttonClass =
-  'inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
+const actionClass =
+  'inline-flex h-9 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-fg-muted shadow-xs transition-colors hover:border-line-strong hover:text-fg'
 
-export default function ArticleView({ article, related, previous, next }: Props) {
+export default function ArticleView({ article, categories, allArticles, previous, next, position }: Props) {
   const style = getCategoryStyle(article.categories?.name)
+  const CategoryIcon = style.icon
   const pdfUrl = safePdfUrl(article.pdf_url)
+  const nav = <DocsNav categories={categories} articles={allArticles} currentId={article.id} />
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-8">
-      <ViewCounter articleId={article.id} />
+    <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <ReadingTracker id={article.id} title={article.title} category={article.categories?.name ?? null} />
 
-      {/* Breadcrumb */}
-      <nav aria-label="Konum" className="mb-4 text-sm">
-        <ol className="flex min-w-0 items-center gap-2 text-gray-600 dark:text-gray-400">
-          <li>
-            <Link href="/" className="transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-              Ana Sayfa
-            </Link>
-          </li>
-          {article.categories && (
-            <>
-              <li aria-hidden>/</li>
+      <div className="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
+        {/* Masaüstü: doküman ağacı */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-14 -ml-2 max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain py-8 pr-2">
+            {nav}
+          </div>
+        </aside>
+
+        <article className="min-w-0 py-6 sm:py-8">
+          {/* Breadcrumb */}
+          <nav aria-label="Konum" className="mb-4 text-sm">
+            <ol className="flex min-w-0 items-center gap-1.5 text-fg-subtle">
               <li>
-                <Link
-                  href={`/?category=${article.category_id}#makaleler`}
-                  className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium transition-opacity hover:opacity-80 ${style.badge}`}
-                >
-                  {article.categories.name}
-                </Link>
+                <Link href="/" className="transition-colors hover:text-fg">Ana sayfa</Link>
               </li>
-            </>
-          )}
-          <li aria-hidden>/</li>
-          <li className="truncate font-medium text-gray-900 dark:text-gray-100" aria-current="page">
-            {article.title}
-          </li>
-        </ol>
-      </nav>
+              {article.categories && (
+                <>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <li className="truncate">
+                    <Link href={`/?category=${article.category_id}#dokumanlar`} className="transition-colors hover:text-fg">
+                      {article.categories.name}
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ol>
+          </nav>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <article className="min-w-0">
-          <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.accent}`} aria-hidden />
-              {article.title}
-            </h1>
-            {pdfUrl && (
-              <div className="flex shrink-0 gap-2">
-                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className={buttonClass}>
-                  ↗ Yeni sekmede aç
-                </a>
-                <a href={pdfUrl} download className={buttonClass}>
-                  ⬇ İndir
-                </a>
-              </div>
-            )}
+          <header className="mb-6">
+            <h1 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{article.title}</h1>
+
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-fg-muted">
+              {article.categories && (
+                <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${style.soft}`}>
+                  <CategoryIcon className="h-3.5 w-3.5" aria-hidden />
+                  {article.categories.name}
+                  {position && <span className="opacity-70">· {position.current}/{position.total}</span>}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4" aria-hidden />
+                {formatDate(article.created_at)}
+              </span>
+              {article.views > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Eye className="h-4 w-4" aria-hidden />
+                  {formatNumber(article.views)} görüntülenme
+                </span>
+              )}
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <ShareButton title={article.title} className={actionClass} />
+              {pdfUrl && (
+                <>
+                  <a href={pdfUrl} download className={actionClass}>
+                    <Download className="h-4 w-4" aria-hidden />
+                    İndir
+                  </a>
+                  {/* Mobilde bu işlev PDF araç çubuğunda zaten var */}
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className={`${actionClass} max-sm:hidden`}>
+                    <ExternalLink className="h-4 w-4" aria-hidden />
+                    <span>Yeni sekmede aç</span>
+                  </a>
+                </>
+              )}
+            </div>
           </header>
 
           {pdfUrl ? (
-            <iframe
-              src={`${pdfUrl}#view=FitH`}
-              className="h-[80vh] min-h-[480px] w-full rounded-lg border border-gray-200 bg-gray-50 shadow-lg dark:border-gray-800 dark:bg-gray-900"
-              title={article.title}
-            />
+            <PdfReaderLazy url={pdfUrl} title={article.title} />
           ) : (
-            <p className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
+            <p className="rounded-xl border border-dashed border-line-strong p-10 text-center text-fg-muted">
               Bu dokümanın dosyasına şu anda ulaşılamıyor.
             </p>
           )}
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 lg:hidden">
-            Doküman telefonda düzgün görünmüyorsa “Yeni sekmede aç” düğmesini kullanın.
-          </p>
 
+          {/* Masaüstü: önceki / sonraki */}
           {(previous || next) && (
-            <nav aria-label="Kategori içinde gezinme" className="mt-6 grid gap-3 sm:grid-cols-2">
+            <nav aria-label="Kategori içinde gezinme" className="mt-8 hidden gap-3 sm:grid sm:grid-cols-2">
               {previous ? <PagerLink article={previous} direction="previous" /> : <span />}
               {next && <PagerLink article={next} direction="next" />}
             </nav>
           )}
-        </article>
 
-        {/* Aynı kategorideki diğer makaleler */}
-        <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
-          <h2 className="mb-3 text-lg font-semibold">
-            {article.categories ? `${article.categories.name} kategorisinde` : 'Diğer makaleler'}
-          </h2>
-          {related.length > 0 ? (
-            <ul className="space-y-1">
-              {related.map(item => (
-                <li key={item.id}>
-                  <Link
-                    href={`/article/${item.id}`}
-                    className="flex items-start gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-400"
-                  >
-                    <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${style.accent}`} aria-hidden />
-                    {item.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Bu kategoride başka makale bulunmuyor.</p>
-          )}
-        </aside>
+          {/* Mobil alt çubuğun içeriği örtmemesi için boşluk */}
+          <div className="h-20 lg:hidden" aria-hidden />
+        </article>
       </div>
+
+      <MobileArticleBar
+        previous={previous && { id: previous.id, title: previous.title }}
+        next={next && { id: next.id, title: next.title }}
+        label={article.categories ? `${article.categories.name}${position ? ` · ${position.current}/${position.total}` : ''}` : 'Dokümanlar'}
+      >
+        {nav}
+      </MobileArticleBar>
     </div>
   )
 }
@@ -134,12 +147,17 @@ function PagerLink({ article, direction }: { article: ArticleSummary; direction:
   return (
     <Link
       href={`/article/${article.id}`}
-      className={`group rounded-xl border border-gray-200 p-4 transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:border-gray-800 dark:hover:border-blue-500/60 dark:hover:bg-blue-500/5 ${isNext ? 'text-right sm:col-start-2' : ''}`}
+      className={`group flex items-center gap-3 rounded-xl border border-line bg-surface p-4 shadow-xs transition-colors hover:border-line-strong ${isNext ? 'flex-row-reverse text-right sm:col-start-2' : ''}`}
     >
-      <div className="text-xs text-gray-500 dark:text-gray-400">{isNext ? 'Sonraki →' : '← Önceki'}</div>
-      <div className="line-clamp-2 font-medium transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
-        {article.title}
-      </div>
+      {isNext ? (
+        <ChevronRight className="h-5 w-5 shrink-0 text-fg-subtle transition-transform group-hover:translate-x-0.5" aria-hidden />
+      ) : (
+        <ChevronLeft className="h-5 w-5 shrink-0 text-fg-subtle transition-transform group-hover:-translate-x-0.5" aria-hidden />
+      )}
+      <span className="min-w-0">
+        <span className="block text-xs text-fg-subtle">{isNext ? 'Sonraki' : 'Önceki'}</span>
+        <span className="line-clamp-2 font-medium">{article.title}</span>
+      </span>
     </Link>
   )
 }

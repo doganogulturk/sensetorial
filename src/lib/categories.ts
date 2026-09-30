@@ -1,61 +1,48 @@
-// Kategorilere ait tüm görsel/metin ayarları tek yerde.
+// Kategorilere ait görsel/metin ayarları tek yerde.
 // Veritabanına yeni bir kategori eklenirse burada tanımı yoksa varsayılan stil kullanılır.
+import { BookOpen, ChartColumn, Folder, ListChecks, SquareFunction, type LucideIcon } from 'lucide-react'
 
 export type CategoryStyle = {
-  icon: string
+  icon: LucideIcon
   description: string
-  /** Sol kenardaki renkli şerit / nokta */
-  accent: string
-  /** Kategori etiketi (rozet) */
-  badge: string
-  /** Kategori kartı arka planı */
-  card: string
-  /** Seçili kart çerçevesi */
-  ring: string
+  /** Küçük renkli nokta */
+  dot: string
+  /** İkon kutusu ve etiket */
+  soft: string
 }
 
 const categoryStyles: Record<string, CategoryStyle> = {
   Fonksiyonlar: {
-    icon: '⚡',
-    description: 'Qlik Sense fonksiyonları hakkında detaylı bilgiler ve kullanım örnekleri',
-    accent: 'bg-blue-500',
-    badge: 'bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300',
-    card: 'from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5',
-    ring: 'ring-blue-500',
+    icon: SquareFunction,
+    description: 'Fonksiyonların sözdizimi ve kullanım örnekleri',
+    dot: 'bg-sky-500',
+    soft: 'bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300',
   },
   Konular: {
-    icon: '📚',
-    description: 'Temel kavramlar ve önemli konular hakkında açıklamalar',
-    accent: 'bg-emerald-500',
-    badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300',
-    card: 'from-emerald-50 to-emerald-100 dark:from-emerald-500/10 dark:to-emerald-500/5',
-    ring: 'ring-emerald-500',
+    icon: BookOpen,
+    description: 'Temel kavramlar ve önemli konular',
+    dot: 'bg-violet-500',
+    soft: 'bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300',
   },
   'Nasıl Yapılır': {
-    icon: '🎯',
+    icon: ListChecks,
     description: 'Adım adım rehberler ve çözüm yöntemleri',
-    accent: 'bg-amber-500',
-    badge: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
-    card: 'from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-500/5',
-    ring: 'ring-amber-500',
+    dot: 'bg-amber-500',
+    soft: 'bg-amber-50 text-amber-800 dark:bg-amber-400/10 dark:text-amber-300',
   },
   Görseller: {
-    icon: '📊',
+    icon: ChartColumn,
     description: 'Görselleştirme türleri ve kullanım örnekleri',
-    accent: 'bg-purple-500',
-    badge: 'bg-purple-100 text-purple-800 dark:bg-purple-500/15 dark:text-purple-300',
-    card: 'from-purple-50 to-purple-100 dark:from-purple-500/10 dark:to-purple-500/5',
-    ring: 'ring-purple-500',
+    dot: 'bg-rose-500',
+    soft: 'bg-rose-50 text-rose-700 dark:bg-rose-400/10 dark:text-rose-300',
   },
 }
 
 const defaultStyle: CategoryStyle = {
-  icon: '📁',
+  icon: Folder,
   description: '',
-  accent: 'bg-gray-400',
-  badge: 'bg-gray-100 text-gray-800 dark:bg-gray-500/15 dark:text-gray-300',
-  card: 'from-gray-50 to-gray-100 dark:from-gray-500/10 dark:to-gray-500/5',
-  ring: 'ring-gray-500',
+  dot: 'bg-zinc-400',
+  soft: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-400/10 dark:text-zinc-300',
 }
 
 export function getCategoryStyle(name: string | null | undefined): CategoryStyle {

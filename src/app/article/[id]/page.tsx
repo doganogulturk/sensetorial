@@ -2,7 +2,7 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import ArticleView from './components/ArticleView'
-import { getArticleById, getArticlesByCategory } from '@/lib/supabase'
+import { getArticleById, getArticleSummaries, getCategories } from '@/lib/supabase'
 import { siteName } from '@/lib/site'
 
 export const revalidate = 300
@@ -20,7 +20,7 @@ const loadArticle = cache(getArticleById)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const article = await loadArticle(id)
-  if (!article) return { title: 'Makale bulunamadı' }
+  if (!article) return { title: 'Doküman bulunamadı' }
 
   const description = article.categories
     ? `${article.title} — ${siteName} ${article.categories.name} kategorisindeki Qlik Sense eğitim dokümanı.`
@@ -36,18 +36,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { id } = await params
-  const article = await loadArticle(id)
+  const [article, categories, allArticles] = await Promise.all([
+    loadArticle(id),
+    getCategories(),
+    getArticleSummaries(),
+  ])
   if (!article) notFound()
 
-  const siblings = await getArticlesByCategory(article.category_id)
+  const siblings = allArticles.filter(a => a.category_id === article.category_id)
   const index = siblings.findIndex(a => a.id === article.id)
 
   return (
     <ArticleView
       article={article}
-      related={siblings.filter(a => a.id !== article.id)}
+      categories={categories}
+      allArticles={allArticles}
       previous={index > 0 ? siblings[index - 1] : null}
       next={index >= 0 && index < siblings.length - 1 ? siblings[index + 1] : null}
+      position={index >= 0 ? { current: index + 1, total: siblings.length } : null}
     />
   )
 }

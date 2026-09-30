@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 import type { ArticleSummary, ArticleWithCategory, Category } from '@/types'
@@ -22,7 +23,7 @@ export function getSupabase() {
 
 const summaryColumns = 'id, title, category_id, views, sira, created_at, categories ( id, name )'
 
-export async function getArticleSummaries(): Promise<ArticleSummary[]> {
+export const getArticleSummaries = cache(async (): Promise<ArticleSummary[]> => {
   const { data, error } = await getSupabase()
     .from('articles')
     .select(summaryColumns)
@@ -31,7 +32,7 @@ export async function getArticleSummaries(): Promise<ArticleSummary[]> {
 
   if (error) throw error
   return data
-}
+})
 
 export async function getArticleById(id: string): Promise<ArticleWithCategory | null> {
   const { data, error } = await getSupabase()
@@ -46,19 +47,7 @@ export async function getArticleById(id: string): Promise<ArticleWithCategory | 
   return data
 }
 
-export async function getArticlesByCategory(categoryId: string): Promise<ArticleSummary[]> {
-  const { data, error } = await getSupabase()
-    .from('articles')
-    .select(summaryColumns)
-    .eq('category_id', categoryId)
-    .order('sira', { ascending: true })
-    .order('title', { ascending: true })
-
-  if (error) throw error
-  return data
-}
-
-export async function getCategories(): Promise<Category[]> {
+export const getCategories = cache(async (): Promise<Category[]> => {
   const { data, error } = await getSupabase()
     .from('categories')
     .select('*')
@@ -66,7 +55,7 @@ export async function getCategories(): Promise<Category[]> {
 
   if (error) throw error
   return data
-}
+})
 
 export async function incrementArticleViews(articleId: string) {
   const { error } = await getSupabase().rpc('increment_article_views', { article_id: articleId })

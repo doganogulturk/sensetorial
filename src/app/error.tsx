@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { TriangleAlert } from 'lucide-react'
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -8,14 +9,16 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   }, [error])
 
   return (
-    <div className="container mx-auto flex flex-col items-center px-4 py-24 text-center">
-      <div className="mb-4 text-6xl" aria-hidden>⚠️</div>
-      <h1 className="mb-2 text-3xl font-bold">Bir şeyler ters gitti</h1>
-      <p className="mb-8 text-gray-600 dark:text-gray-400">İçerik yüklenirken bir hata oluştu. Lütfen tekrar deneyin.</p>
+    <div className="mx-auto flex max-w-md flex-col items-center px-4 py-24 text-center">
+      <span className="mb-6 grid h-14 w-14 place-items-center rounded-2xl bg-subtle text-fg-muted">
+        <TriangleAlert className="h-7 w-7" aria-hidden />
+      </span>
+      <h1 className="mb-2 text-2xl font-semibold tracking-tight">Bir şeyler ters gitti</h1>
+      <p className="mb-8 text-fg-muted">İçerik yüklenirken bir hata oluştu. Lütfen tekrar deneyin.</p>
       <button
         type="button"
         onClick={reset}
-        className="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition-colors hover:bg-blue-700"
+        className="inline-flex h-10 items-center rounded-lg bg-accent px-5 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover"
       >
         Tekrar dene
       </button>

@@ -1,5 +1,7 @@
 'use client'
 
+import { Moon, Sun } from 'lucide-react'
+
 export default function ThemeToggle() {
   const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle('dark')
@@ -16,12 +18,12 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="rounded-lg p-2 text-xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+      className="grid h-10 w-10 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-subtle hover:text-fg"
       aria-label="Açık/koyu tema değiştir"
       title="Açık/koyu tema"
     >
-      <span className="dark:hidden" aria-hidden>🌙</span>
-      <span className="hidden dark:inline" aria-hidden>☀️</span>
+      <Moon className="h-[18px] w-[18px] dark:hidden" aria-hidden />
+      <Sun className="hidden h-[18px] w-[18px] dark:block" aria-hidden />
     </button>
   )
 }

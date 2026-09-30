@@ -1,7 +1,7 @@
 # Sensetorial
 
 Qlik Sense eğitim dokümanlarının (PDF) kategorilere ayrılarak yayınlandığı site.
-Next.js (App Router) + Supabase + Tailwind CSS.
+Next.js (App Router) + Supabase + Tailwind CSS 4.
 
 ## Kurulum
 
@@ -29,6 +29,12 @@ Makaleleri Supabase Dashboard (Table Editor) üzerinden eklemeye devam edebilirs
 Dashboard bu kısıtlamalardan etkilenmez. `sira` alanı ana sayfadaki "Önerilen sıra" ve
 makale sayfasındaki önceki/sonraki gezinme sırasını belirler.
 
+## PDF dosyaları
+
+Dokümanlar PDF.js ile görüntülenir. Bunun için PDF'lerin bulunduğu sunucunun CORS izni
+vermesi gerekir (Supabase Storage bunu varsayılan olarak yapar). İzin yoksa site otomatik
+olarak tarayıcının kendi PDF görüntüleyicisine geri döner.
+
 ## Komutlar
 
 | Komut | Açıklama |
@@ -48,8 +54,12 @@ src/
     sitemap.ts, robots.ts
   components/
     home/ArticleBrowser.tsx   Arama, kategori filtresi, sıralama (URL ile senkron)
+    SearchDialog.tsx          ⌘K ile açılan genel arama
+  app/article/[id]/components/
+    PdfReader.tsx             PDF.js görüntüleyici (iframe'e geri dönüşlü)
   lib/
     categories.ts             Kategori renk/ikon/açıklamaları (tek kaynak)
+    history.ts                "Kaldığınız yerden devam" için okuma geçmişi (tarayıcıda)
     supabase.ts               Veri erişim fonksiyonları
     search.ts                 Türkçe karakter duyarsız arama
 supabase/migrations/          Veritabanı güncellemeleri
