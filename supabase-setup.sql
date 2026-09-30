@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS articles (
   title TEXT NOT NULL,
   pdf_url TEXT NOT NULL,
   category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-  views INTEGER DEFAULT 0,
+  views INTEGER NOT NULL DEFAULT 0,
   sira INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -44,7 +44,7 @@ ON CONFLICT (name) DO NOTHING;
 -- );
 
 -- Row Level Security (RLS) ayarları
--- Public okuma erişimi için (herkes okuyabilir, sadece authenticated kullanıcılar yazabilir)
+-- Herkes okuyabilir; yazma yetkileri migration dosyasında yöneticilerle sınırlandırılır
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
 
@@ -58,29 +58,5 @@ CREATE POLICY "Articles are viewable by everyone"
   ON articles FOR SELECT
   USING (true);
 
--- Authenticated kullanıcılar kategori ekleyebilir/güncelleyebilir
-CREATE POLICY "Authenticated users can insert categories"
-  ON categories FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Authenticated users can update categories"
-  ON categories FOR UPDATE
-  TO authenticated
-  USING (true);
-
--- Authenticated kullanıcılar makale ekleyebilir/güncelleyebilir
-CREATE POLICY "Authenticated users can insert articles"
-  ON articles FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Authenticated users can update articles"
-  ON articles FOR UPDATE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Authenticated users can delete articles"
-  ON articles FOR DELETE
-  TO authenticated
-  USING (true);
+-- Yazma yetkileri, görüntülenme sayacı ve yönetici tablosu:
+-- supabase/migrations/20260930000000_views_and_admin_rls.sql dosyasını da çalıştırın.
