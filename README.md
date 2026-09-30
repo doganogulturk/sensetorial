@@ -29,6 +29,13 @@ Makaleleri Supabase Dashboard (Table Editor) üzerinden eklemeye devam edebilirs
 Dashboard bu kısıtlamalardan etkilenmez. `sira` alanı ana sayfadaki "Önerilen sıra" ve
 makale sayfasındaki önceki/sonraki gezinme sırasını belirler.
 
+## Görüntülenme sayıları
+
+Her doküman açılışında `articles.views` sütunu artar (aynı oturumda bir kez). Sayılar şimdilik
+ekranda gösterilmiyor; Supabase Table Editor'den bakabilirsiniz. Göstermek için
+`src/lib/site.ts` içindeki `features.showViewCounts` değerini `true` yapın: kartlardaki sayılar,
+"En çok okunanlar" paneli ve "En çok okunan" sıralaması geri gelir.
+
 ## PDF dosyaları
 
 Dokümanlar PDF.js ile görüntülenir. Bunun için PDF'lerin bulunduğu sunucunun CORS izni

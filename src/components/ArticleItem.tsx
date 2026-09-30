@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ChevronRight, Eye } from 'lucide-react'
 import { getCategoryStyle } from '@/lib/categories'
+import { features } from '@/lib/site'
 import { formatNumber } from '@/lib/format'
 import type { ArticleSummary } from '@/types'
 
@@ -46,7 +47,7 @@ export function ArticleRow({ article, isNew }: Props) {
             <CategoryBadge name={article.categories.name} />
           </span>
         )}
-        {article.views > 0 && (
+        {features.showViewCounts && article.views > 0 && (
           <span className="hidden w-16 shrink-0 items-center justify-end gap-1 text-xs tabular-nums text-fg-subtle md:flex">
             <Eye className="h-3.5 w-3.5" aria-hidden />
             {formatNumber(article.views)}
@@ -84,7 +85,7 @@ export function ArticleTile({ article, isNew }: Props) {
               {article.categories.name}
             </span>
           )}
-          {article.views > 0 && (
+          {features.showViewCounts && article.views > 0 && (
             <span className="flex items-center gap-1 tabular-nums">
               <Eye className="h-3.5 w-3.5" aria-hidden />
               {formatNumber(article.views)}

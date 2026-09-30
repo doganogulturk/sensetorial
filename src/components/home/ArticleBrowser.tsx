@@ -9,6 +9,7 @@ import ContinueReading from '@/components/home/ContinueReading'
 import { getCategoryStyle } from '@/lib/categories'
 import { formatNumber } from '@/lib/format'
 import { matchesSearch } from '@/lib/search'
+import { features } from '@/lib/site'
 import { useLocalStorage } from '@/lib/useLocalStorage'
 import type { ArticleSummary, Category } from '@/types'
 
@@ -21,6 +22,9 @@ const sortOptions = {
 } as const
 
 type SortKey = keyof typeof sortOptions
+
+const isAvailableSort = (key: string): key is SortKey =>
+  key in sortOptions && (key !== 'popular' || features.showViewCounts)
 
 type Props = {
   categories: Category[]
@@ -52,7 +56,7 @@ function BrowserWithParams(props: Props) {
   const urlState: UrlState = {
     search: params.get('search') ?? '',
     category: params.get('category'),
-    sort: sortParam && sortParam in sortOptions ? (sortParam as SortKey) : 'default',
+    sort: sortParam && isAvailableSort(sortParam) ? sortParam : 'default',
   }
   return <BrowserView {...props} urlState={urlState} />
 }
@@ -214,7 +218,7 @@ function BrowserView({ categories, articles, newSince, urlState }: Props & { url
       <div className="mt-12 space-y-12">
         {!hasFilters && <ContinueReading validIds={validIds} />}
 
-        {!hasFilters && popular.length > 0 && (
+        {features.showViewCounts && !hasFilters && popular.length > 0 && (
           <HighlightPanel title="En çok okunanlar" icon={<TrendingUp className="h-4 w-4" aria-hidden />}>
             {popular.map((article, i) => (
               <HighlightLink key={article.id} article={article} rank={i + 1} />
@@ -251,7 +255,7 @@ function BrowserView({ categories, articles, newSince, urlState }: Props & { url
                   aria-label="Sıralama"
                   className="h-9 appearance-none rounded-lg border border-line bg-surface pl-8 pr-3 text-sm shadow-xs transition-colors hover:border-line-strong focus:outline-none"
                 >
-                  {Object.entries(sortOptions).map(([value, label]) => (
+                  {Object.entries(sortOptions).filter(([value]) => isAvailableSort(value)).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>

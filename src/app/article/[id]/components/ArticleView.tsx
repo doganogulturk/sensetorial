@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CalendarDays, ChevronLeft, ChevronRight, Download, ExternalLink, Eye } from 'lucide-react'
 import { getCategoryStyle } from '@/lib/categories'
+import { features } from '@/lib/site'
 import { formatDate, formatNumber } from '@/lib/format'
 import type { ArticleSummary, ArticleWithCategory, Category } from '@/types'
 import DocsNav from './DocsNav'
@@ -84,7 +85,7 @@ export default function ArticleView({ article, categories, allArticles, previous
                 <CalendarDays className="h-4 w-4" aria-hidden />
                 {formatDate(article.created_at)}
               </span>
-              {article.views > 0 && (
+              {features.showViewCounts && article.views > 0 && (
                 <span className="inline-flex items-center gap-1.5">
                   <Eye className="h-4 w-4" aria-hidden />
                   {formatNumber(article.views)} görüntülenme
