@@ -1,5 +1,5 @@
 export type Database = {
-  public: {
+  do_sensetorial: {
     Tables: {
       articles: {
         Row: {

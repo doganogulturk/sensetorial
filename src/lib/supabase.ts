@@ -3,7 +3,11 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 import type { ArticleSummary, ArticleWithCategory, Category } from '@/types'
 
-let client: SupabaseClient<Database> | null = null
+// Veritabanı DoganOgulturk Supabase projesinde, başka uygulamalarla paylaşılıyor; Sensetorial'ın tabloları
+// kendi şemasında (supabase/schema.sql).
+const SEMA = 'do_sensetorial'
+
+let client: SupabaseClient<Database, typeof SEMA> | null = null
 
 // İstemci ilk kullanımda oluşturulur; böylece env eksikse hata import anında değil,
 // veriye erişilmeye çalışıldığında ve anlaşılır bir mesajla alınır.
@@ -11,12 +15,13 @@ export function getSupabase() {
   if (client) return client
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   if (!url) throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
-  if (!anonKey) throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  if (!key) throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY')
 
-  client = createClient<Database>(url, anonKey, {
+  client = createClient<Database, typeof SEMA>(url, key, {
     auth: { persistSession: false },
+    db: { schema: SEMA },
   })
   return client
 }

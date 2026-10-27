@@ -13,20 +13,26 @@ npm run dev                  # http://localhost:3000
 
 | Değişken | Açıklama |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase proje adresi |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (public) anahtarı |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase proje adresi (DoganOgulturk) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (herkese açık) anahtarı |
 | `NEXT_PUBLIC_SITE_URL` | Sitenin yayındaki adresi; `sitemap.xml` için gerekli |
 
 ## Veritabanı
 
-1. Yeni kurulumda `supabase-setup.sql` dosyasını Supabase SQL Editor'de çalıştırın.
-2. Ardından `supabase/migrations/` altındaki dosyaları sırayla çalıştırın
-   (mevcut veritabanında yalnızca bunlar yeterlidir). Bu migration:
-   - görüntülenme sayacı için `increment_article_views` fonksiyonunu ekler,
-   - ekleme/güncelleme/silme yetkisini `admins` tablosundaki kullanıcılarla sınırlar.
+Veritabanı Supabase'deki DoganOgulturk projesinde, başka uygulamalarla paylaşılıyor; Sensetorial'ın her şeyi
+kendi şemasında: `do_sensetorial` (`categories`, `articles`, `admins`, sayaç ve yönetici fonksiyonları) ve PDF'ler
+herkese açık `sensetorial-pdfs` kovasında. Tanımın tamamı `supabase/schema.sql`'de; SQL Editor'de çalıştırılır,
+tekrar çalıştırmak güvenlidir. Şemanın Project Settings → Data API → **Exposed schemas** listesinde olması
+gerekir, yoksa her istek `PGRST106 Invalid schema` verir.
 
-Makaleleri Supabase Dashboard (Table Editor) üzerinden eklemeye devam edebilirsiniz;
-Dashboard bu kısıtlamalardan etkilenmez. `sira` alanı ana sayfadaki "Önerilen sıra" ve
+- Ziyaretçiler tabloları yalnızca okur; görüntülenme sayacını `increment_article_views` ile artırır.
+- Ekleme/güncelleme/silme yalnızca `admins` tablosundaki kullanıcılara açık.
+
+Ekim 2026'ya kadar veritabanı ayrı bir Sensetorial Supabase projesinin `public` şemasındaydı; oradan aynı
+kimliklerle taşındı.
+
+Makaleleri Supabase Dashboard (Table Editor) üzerinden ekleyin: PDF'i `sensetorial-pdfs` kovasına yükleyip
+adresini `articles.pdf_url`'e yazın. Dashboard bu kısıtlamalardan etkilenmez. `sira` alanı ana sayfadaki "Önerilen sıra" ve
 makale sayfasındaki önceki/sonraki gezinme sırasını belirler.
 
 ## Görüntülenme sayıları
@@ -69,7 +75,7 @@ src/
     history.ts                "Kaldığınız yerden devam" için okuma geçmişi (tarayıcıda)
     supabase.ts               Veri erişim fonksiyonları
     search.ts                 Türkçe karakter duyarsız arama
-supabase/migrations/          Veritabanı güncellemeleri
+supabase/schema.sql           Veritabanı tanımı
 ```
 
 Yeni bir kategori eklerseniz renk ve ikonunu `src/lib/categories.ts` içine ekleyin;

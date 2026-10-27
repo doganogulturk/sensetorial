@@ -1,7 +1,7 @@
 import type { Database } from './supabase'
 
-export type Article = Database['public']['Tables']['articles']['Row']
-export type Category = Database['public']['Tables']['categories']['Row']
+export type Article = Database['do_sensetorial']['Tables']['articles']['Row']
+export type Category = Database['do_sensetorial']['Tables']['categories']['Row']
 
 export type ArticleWithCategory = Article & {
   categories: Pick<Category, 'id' | 'name'> | null
